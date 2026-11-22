@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Partículas: CPU vs WebGL vs WebGPU</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: monospace; color: #cde; }
+    #stage { position: fixed; inset: 0; }
+    #stage canvas { width: 100%; height: 100%; display: block; }
+    #panel { position: fixed; top: 10px; left: 10px; padding: 10px; background: #0008; border-radius: 6px; z-index: 1; }
+    #panel select, #panel button { margin-right: 6px; }
+    #status { margin-top: 8px; white-space: pre; }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <div id="panel">
+    <select id="backend">
+      <option value="webgpu">WebGPU</option>
+      <option value="webgl">WebGL</option>
+      <option value="cpu">CPU</option>
+    </select>
+    <select id="count">
+      <option value="10000">10 k</option>
+      <option value="100000">100 k</option>
+      <option value="1000000" selected>1 M</option>
+      <option value="4000000">4 M</option>
+    </select>
+    <button id="start">Iniciar</button>
+    <div id="status">Pulsa Iniciar</div>
+  </div>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
