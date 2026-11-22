@@ -1,4 +1,4 @@
-import { PARAMS, initParticles } from './common.js';
+import { PARAMS, initParticles, brightness } from './common.js';
 
 export default class CPUBackend {
   async init(canvas, n) {
@@ -7,9 +7,10 @@ export default class CPUBackend {
     this.h = canvas.height;
     this.ctx = canvas.getContext('2d');
     this.data = initParticles(n);
+    this.base = brightness(n);
     this.img = this.ctx.createImageData(this.w, this.h);
-    this.pix = new Uint32Array(this.img.data.buffer);  // vista de 32 bits sobre los píxeles
-    this.acc = new Uint8Array(this.w * this.h);        // brillo acumulado por píxel
+    this.pix = new Uint32Array(this.img.data.buffer);  // vista de 32 bits sobre els píxels
+    this.acc = new Uint8Array(this.w * this.h);        // brillantor acumulada per píxel
     this.pal = makePalette();
   }
 
@@ -20,7 +21,7 @@ export default class CPUBackend {
 
   simulate(dt, mouse) {
     const { G, SOFT, DRAG, SWIRL } = PARAMS;
-    const g = mouse.down ? G * 4 : G;
+    const g = mouse.down ? G * 4 : G;  // clic premut: atracció més forta
     const d = this.data, n = this.n;
     const mx = mouse.x, my = mouse.y;
     const drag = 1 - DRAG * dt;
@@ -28,15 +29,18 @@ export default class CPUBackend {
     for (let i = 0, j = 0; i < n; i++, j += 4) {
       let x = d[j], y = d[j + 1], vx = d[j + 2], vy = d[j + 3];
 
+      // Força cap a l'atractor, més un component tangencial (remolí)
       const dx = mx - x, dy = my - y;
       const r2 = dx * dx + dy * dy + SOFT;
       const k = g / (r2 * Math.sqrt(r2));
 
+      // Integració d'Euler amb fregament
       vx = (vx + (dx - dy * SWIRL) * k * dt) * drag;
       vy = (vy + (dy + dx * SWIRL) * k * dt) * drag;
       x += vx * dt;
       y += vy * dt;
 
+      // Rebot a les vores de la pantalla
       if (x > 1)  { x = 1;  vx *= -0.5; } else if (x < -1) { x = -1; vx *= -0.5; }
       if (y > 1)  { y = 1;  vy *= -0.5; } else if (y < -1) { y = -1; vy *= -0.5; }
 
@@ -45,20 +49,20 @@ export default class CPUBackend {
   }
 
   draw() {
-    const { acc, pix, pal, data: d, w, h, n } = this;
+    const { acc, pix, pal, data: d, w, h, n, base } = this;
 
-    // 1) cada partícula suma brillo en su píxel (más rápida = más brillo)
+    // 1) Cada partícula suma brillantor al seu píxel (més ràpida = més brillant)
     for (let i = 0, j = 0; i < n; i++, j += 4) {
       const px = ((d[j] * 0.5 + 0.5) * w) | 0;
       const py = ((0.5 - d[j + 1] * 0.5) * h) | 0;
       if (px < 0 || px >= w || py < 0 || py >= h) continue;
       const idx = py * w + px;
       const sp = Math.abs(d[j + 2]) + Math.abs(d[j + 3]);
-      const v = acc[idx] + 10 + Math.min(sp * 40, 40);
+      const v = acc[idx] + base + Math.min(sp * 40, 40);
       acc[idx] = v > 255 ? 255 : v;
     }
 
-    // 2) brillo -> color con la paleta, y limpiar para el siguiente frame
+    // 2) Brillantor -> color amb la paleta, i netejar per al següent frame
     for (let i = 0; i < pix.length; i++) pix[i] = pal[acc[i]];
     acc.fill(0);
 
@@ -68,10 +72,10 @@ export default class CPUBackend {
   destroy() {}
 }
 
-// Paleta negro -> azul -> cian -> blanco (formato ABGR, little-endian)
+// Paleta negre -> blau -> cian -> blanc (format ABGR, little-endian)
 function makePalette() {
   const pal = new Uint32Array(256);
-  const ss = (a, b, t) => {
+  const ss = (a, b, t) => {  // smoothstep
     t = Math.min(Math.max((t - a) / (b - a), 0), 1);
     return t * t * (3 - 2 * t);
   };

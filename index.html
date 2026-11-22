@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Partículas: CPU vs WebGL vs WebGPU</title>
+  <title>Particles: CPU vs WebGL vs WebGPU</title>
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: monospace; color: #cde; }
     #stage { position: fixed; inset: 0; }
@@ -13,7 +13,10 @@
   </style>
 </head>
 <body>
+  <!-- Zona on es crea el canvas de cada motor -->
   <div id="stage"></div>
+
+  <!-- Panell de control: motor, nombre de partícules i estadístiques -->
   <div id="panel">
     <select id="backend">
       <option value="webgpu">WebGPU</option>
@@ -26,8 +29,8 @@
       <option value="1000000" selected>1 M</option>
       <option value="4000000">4 M</option>
     </select>
-    <button id="start">Iniciar</button>
-    <div id="status">Pulsa Iniciar</div>
+    <button id="start">Start</button>
+    <div id="status">Press Start</div>
   </div>
   <script type="module" src="main.js"></script>
 </body>
