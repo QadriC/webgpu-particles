@@ -121,6 +121,12 @@ export default class WebGLBackend {
     this.draw();
   }
 
+  // Llegir un sol píxel obliga la GPU a acabar tot el que té pendent
+  async sync() {
+    const gl = this.gl;
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, this.px);
+  }
+
   simulate(dt, mouse) {
     const { gl, n } = this;
     const src = this.cur;

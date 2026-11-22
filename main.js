@@ -56,3 +56,47 @@ function loop(t) {
 
 $('start').addEventListener('click', start);
 requestAnimationFrame(loop);
+
+// Mode benchmark: executa tots els casos i mostra la taula de resultats
+let lastCSV = '';
+
+// Informació de la GPU que fan servir WebGPU i WebGL, per deixar-la al resultat
+async function gpuInfo() {
+  const lines = [];
+  const adapter = await navigator.gpu?.requestAdapter();
+  if (adapter) lines.push(`WebGPU adapter: ${adapter.info.vendor} ${adapter.info.architecture}`);
+
+  const gl = document.createElement('canvas').getContext('webgl2');
+  const ext = gl?.getExtension('WEBGL_debug_renderer_info');
+  if (ext) lines.push('WebGL renderer: ' + gl.getParameter(ext.UNMASKED_RENDERER_WEBGL));
+  gl?.getExtension('WEBGL_lose_context')?.loseContext();
+  return lines.join('\n');
+}
+
+$('bench').addEventListener('click', async () => {
+  if (backend) { backend.destroy(); backend = null; }
+  // Bloquegem els botons perquè ningú interfereixi durant la mesura
+  $('bench').disabled = true;
+  $('start').disabled = true;
+  $('copy').disabled = true;
+
+  try {
+    const { runBenchmark, formatTable, toCSV } = await import('./benchmark.js');
+    const rows = await runBenchmark(stage, msg => $('status').textContent = msg);
+
+    lastCSV = toCSV(rows);
+    $('status').textContent =
+      navigator.userAgent + '\n' + (await gpuInfo()) + '\n\n' + formatTable(rows);
+    console.table(rows);
+    $('copy').disabled = false;
+  } catch (e) {
+    console.error(e);
+    $('status').textContent = 'Error: ' + e.message;
+  } finally {
+    $('bench').disabled = false;
+    $('start').disabled = false;
+  }
+});
+
+// El porta-retalls requereix un gest de l'usuari, per això és un botó a part
+$('copy').addEventListener('click', () => navigator.clipboard.writeText(lastCSV));

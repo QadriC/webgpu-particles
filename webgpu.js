@@ -204,6 +204,11 @@ export default class WebGPUBackend {
     this.queue.submit([enc.finish()]);
   }
 
+  // Espera que la GPU hagi acabat tot el que s'ha enviat a la cua
+  async sync() {
+    await this.queue.onSubmittedWorkDone();
+  }
+
   destroy() {
     this.particles.destroy();
     this.uniformBuf.destroy();

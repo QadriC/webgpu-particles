@@ -19,6 +19,9 @@ export default class CPUBackend {
     this.draw();
   }
 
+  // La CPU és síncrona: quan frame() torna, la feina ja està feta
+  async sync() {}
+
   simulate(dt, mouse) {
     const { G, SOFT, DRAG, SWIRL } = PARAMS;
     const g = mouse.down ? G * 4 : G;  // clic premut: atracció més forta
