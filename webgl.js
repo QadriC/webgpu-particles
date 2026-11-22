@@ -78,6 +78,7 @@ export default class WebGLBackend {
     this.w = canvas.width;
     this.h = canvas.height;
     this.base = brightness(n) / 255;
+    this.px = new Uint8Array(4);  // destinació de readPixels (per al sync)
 
     this.simProg = createProgram(gl, SIM_VS, SIM_FS, ['v_state']);
     this.renderProg = createProgram(gl, RENDER_VS, RENDER_FS);

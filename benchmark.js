@@ -29,43 +29,48 @@ async function measure(stage, name, n) {
 
   const mod = await import(`./${name}.js`);
   const backend = new mod.default();
+
   try {
     await backend.init(canvas, n);
-  } catch (e) {
-    return { backend: name, n, error: e.message };
-  }
 
-  // Trajectòria del ratolí determinista: igual als tres motors
-  const mouse = { x: 0, y: 0, down: false };
-  let step = 0;
-  const run = frames => {
-    for (let i = 0; i < frames; i++) {
-      const t = step++ * DT;
-      mouse.x = 0.6 * Math.cos(t);
-      mouse.y = 0.6 * Math.sin(1.3 * t);
-      backend.frame(DT, mouse);
-    }
-  };
+    // Trajectòria del ratolí determinista: igual als tres motors
+    const mouse = { x: 0, y: 0, down: false };
+    let step = 0;
+    const run = frames => {
+      for (let i = 0; i < frames; i++) {
+        const t = step++ * DT;
+        mouse.x = 0.6 * Math.cos(t);
+        mouse.y = 0.6 * Math.sin(1.3 * t);
+        backend.frame(DT, mouse);
+      }
+    };
 
-  // Escalfament: no es mesura
-  run(WARMUP_FRAMES);
-  await backend.sync();
-
-  // Mesura per tandes: només es cronometra la feina real (frames + espera de la GPU)
-  const batch = name === 'cpu' ? 1 : 16;
-  let total = 0, frames = 0;
-  while (total < MIN_TIME_MS || frames < 5) {
-    const t0 = performance.now();
-    run(batch);
+    // Escalfament: no es mesura
+    run(WARMUP_FRAMES);
     await backend.sync();
-    total += performance.now() - t0;
-    frames += batch;
-    // Cedim el control al navegador entre tandes (fora del temps mesurat)
-    await new Promise(r => setTimeout(r));
-  }
 
-  backend.destroy();
-  return { backend: name, n, frames, msPerFrame: total / frames };
+    // Mesura per tandes: només es cronometra la feina real (frames + espera de la GPU)
+    const batch = name === 'cpu' ? 1 : 16;
+    let total = 0, frames = 0;
+    while (total < MIN_TIME_MS || frames < 5) {
+      const t0 = performance.now();
+      run(batch);
+      await backend.sync();
+      total += performance.now() - t0;
+      frames += batch;
+      // Cedim el control al navegador entre tandes (fora del temps mesurat)
+      await new Promise(r => setTimeout(r));
+    }
+
+    return { backend: name, n, frames, msPerFrame: total / frames };
+  } catch (e) {
+    // Un cas fallit queda registrat com a error, però la resta continua
+    console.error(name, n, e);
+    return { backend: name, n, error: e.message };
+  } finally {
+    // Si init() ha fallat a mitges, destroy() també pot fallar: ho ignorem
+    try { backend.destroy(); } catch {}
+  }
 }
 
 // Taula de text per mostrar a la pàgina
