@@ -17,6 +17,7 @@
   <div id="stage"></div>
 
   <!-- Panell de control: motor, nombre de partícules i estadístiques -->
+    <!-- Panell de control: motor, nombre de partícules, estadístiques i benchmark -->
   <div id="panel">
     <select id="backend">
       <option value="webgpu">WebGPU</option>
@@ -28,8 +29,11 @@
       <option value="100000">100 k</option>
       <option value="1000000" selected>1 M</option>
       <option value="4000000">4 M</option>
+      <option value="8000000">8 M</option>
     </select>
     <button id="start">Start</button>
+    <button id="bench">Benchmark</button>
+    <button id="copy" disabled>Copy CSV</button>
     <div id="status">Press Start</div>
   </div>
   <script type="module" src="main.js"></script>
